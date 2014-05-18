@@ -1,0 +1,227 @@
+Ошибка с QSslSocket. Работа с сервером vk.com. Работа с xml. Улучшение архитектуры приложения.
+
+Привет!
+
+Прислушался к совету форумчан: взяться за проект, который бы включал в себя максимум того, что мне нужно освоить на практике.
+
+Возникла большая проблема, о которой напишу ниже. Опишу свои шаги:
+
+За основу взял эту статью: http://habrahabr.ru/post/115397/
+
+Правда она старая. В статье использует устаревший способ авторизации: http://vk.com/developers.php?id=-1_21239305&s=1
+
+Я переделываю под новый механизм авторизации на базе протокола OAuth 2.0: http://vk.com/developers.php?oid=-1&p=Авторизация_клиентских_приложений
+
+Моя задача получить данные от vk.com в xml-формате и распарсить их. Сразу вопрос: могу ли я получить данные в Json-формате?
+
+Примечание: Просьба не сдерживаться в критике к моему подходу к разработке. У меня крайне мало опыта и любая информация для меня очень ценна (вплоть до имён переменных, функций и классов).
+
+Вот что я сделал:
+
+Я создал gui-проект с формой (MainWindow). В MainWindow вообще не лазил и ничего не менял (как был по умолчанию). В класс MainWindow я буду передавать результаты работы из класса VkOAuth (описан ниже) Результатами работы объекта класса VkOAuth являются xml-данные (если возможно, то и Json, его тоже нужно освоить, и о нём тоже будут спрашивать на собеседовании). Сначала будет запускаться окно класс VkOAuth (авторизация), которое наследует от QWebView. После авторизации данные будут передаваться в MainWindow. VkOAuth - буду закрывать, а MainWindow показывать. Вот передача результата после авторизации в окно MainWindow и скрытие окна авторизации:
+[code=cpp]
+    QObject::connect(&vkOAuth, SIGNAL( success(QString) ),
+                     &window, SLOT( slotSuccess(QString) )
+                     );
+[/code]
+[code=cpp]
+    QObject::connect(&vkOAuth, SIGNAL( hided() ),
+                     &window, SLOT( show() )
+                     );
+[/code]
+
+На основе класса VKAuth из статьи http://habrahabr.ru/post/115397/ создал свой класс: VkOAuth
+
+vkoauth.h
+[code=cpp]
+#ifndef VKOAUTH_H
+#define VKOAUTH_H
+
+#include <QWebView>
+#include <QNetworkReply>
+#include <QtXml>
+
+class VkOAuth : public QWebView
+{
+    Q_OBJECT
+
+protected:
+    QString m_app;
+    QNetworkReply* m_http;
+    void loadLoginPage();
+
+public:
+    VkOAuth(QString app, QWidget* parent=0);
+
+signals:
+    void success(QString);
+    void unsuccess();
+    void hided();
+
+public slots:
+    void slotLinkChanged(QUrl url);
+    void slotDone();
+    void slotRequest(QUrl request);
+
+private:
+    QString m_access_token;
+    QString m_expires_in;
+    QString m_user_id;
+};
+
+#endif // VKOAUTH_H
+[/code]
+
+vkoauth.cpp
+[code=cpp]
+#include "vkoauth.h"
+
+#include <QNetworkRequest>
+#include <QMessageBox>
+#include <QDebug>
+
+void VkOAuth::loadLoginPage(){
+    QUrl url("https://oauth.vk.com/authorize");
+    QUrlQuery query;
+
+    query.addQueryItem("client_id", m_app);
+    query.addQueryItem("layout","https://oauth.vk.com/blank.html"  );
+    query.addQueryItem("display", "popup");
+    query.addQueryItem("scope", "2");
+    query.addQueryItem("response_type", "token");
+
+    url.setQuery(query);
+
+    load(url);
+}
+
+VkOAuth::VkOAuth(QString app,QWidget* parent) : QWebView(parent)
+{
+
+    QObject::connect(this, SIGNAL( urlChanged(QUrl)      ),
+                     SLOT( slotLinkChanged(QUrl) )
+                     );
+    m_app = app;
+    loadLoginPage();
+}
+
+void VkOAuth::slotLinkChanged(QUrl url)
+{
+    if ("/blank.html" == url.path()) {
+        QRegExp regexp("access_token=([^,]+)&expires_in=([^,]+)&user_id=([^,]+)");
+
+        QString str= url.fragment();
+
+        if( -1 != regexp.indexIn(str) ){
+            m_access_token = regexp.cap(1);
+            m_expires_in = regexp.cap(2);
+            m_user_id = regexp.cap(3);
+            hide(); //hide this window
+            emit hided();
+        }
+    }
+    else if("/api/login_failure.html" == url.path()){
+        emit unsuccess();
+    }
+}
+
+void VkOAuth::slotRequest(QUrl request) {
+    //QUrl request(QString("https://api.vk.com/method/%1.xml?").arg("friends.get"));
+    QUrlQuery query;
+    query.addQueryItem("user_id", m_user_id);
+    query.addQueryItem("access_token", m_access_token);
+    request.setQuery(query);
+
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+    m_http = manager->get(QNetworkRequest(request));
+    QObject::connect(m_http, SIGNAL(finished()), this, SLOT(slotDone()));
+}
+
+void VkOAuth::slotDone() {
+    QString russian = QString::fromUtf8(m_http->readAll());
+
+//    QDomDocument dom;
+//    QByteArray aByteArray = russian.toUtf8();
+//    if (!dom.setContent(aByteArray)) {
+//        QMessageBox::critical(this, tr("Error"), tr("Failed to parse the file into a DOM tree"));
+//        return;
+//    }
+    qDebug() << russian;
+    emit success(russian);
+    m_http->close();
+}
+[/code]
+
+main.cpp
+[code=cpp]
+#include "mainwindow.h"
+#include "vkoauth.h"
+#include <QApplication>
+
+int main(int argc, char *argv[])
+{
+    QApplication app(argc, argv);
+
+    MainWindow window;
+    //w.show();
+
+    VkOAuth vkOAuth(""); // здесь должнен быть номер приложения, убрал для 
+                         // форума, чтобы не палить
+
+    QObject::connect(&vkOAuth, SIGNAL( unsuccess() ),
+                     &app   , SLOT( quit() )
+                     );
+//    QObject::connect(&vkOAuth, SIGNAL( success(QString) ),
+//                     &window, SLOT( slotSuccess(QString) )
+//                     );
+//    QObject::connect(&window, SIGNAL( sendRequest(QUrl) ),
+//                     &vkOAuth, SLOT( slotRequest(QUrl) )
+//                     );
+//    QObject::connect(&vkOAuth, SIGNAL( hided() ),
+//                     &window, SLOT( show() )
+//                     );
+    vkOAuth.show();
+
+    return app.exec();
+}
+[/code]
+
+vk_oauth.pro
+[code=cpp]
+#-------------------------------------------------
+#
+# Project created by QtCreator 2014-02-15T11:09:56
+#
+#-------------------------------------------------
+
+QT       += core gui webkitwidgets network xml
+
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+
+TARGET = vk_oauth
+TEMPLATE = app
+
+
+SOURCES += main.cpp\
+        mainwindow.cpp \
+    vkoauth.cpp
+
+HEADERS  += mainwindow.h \
+    vkoauth.h
+
+FORMS    += mainwindow.ui
+[/code]
+
+При запуске приложения в окно "Application Output" выводятся следующие строки:
+
+QSslSocket: cannot call unresolved function SSLv23_client_method
+QSslSocket: cannot call unresolved function SSL_CTX_new
+QSslSocket: cannot call unresolved function SSL_library_init
+QSslSocket: cannot call unresolved function ERR_get_error
+QSslSocket: cannot call unresolved function ERR_get_error
+
+И всё. На этом моя работа по этому проекту встала. Очень прошу помощи! Заранее спасибо!
+
+
+
+vk.com присылает данные в ответ на запрос в XML формате. Что лучше использовать: 

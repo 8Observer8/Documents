@@ -1,0 +1,45 @@
+Разбор программы FurtuneServer
+
+Помагите, пожалуйста, разобаться с этой строкой:
+
+[code=cpp]
+    qsrand(QTime(0,0,0).secsTo(QTime::currentTime()));
+[/code]
+
+Эта строка находится в файле "main.cpp":
+
+[code=cpp]
+#include <QApplication>
+#include <QtCore>
+
+#include <stdlib.h>
+
+#include "dialog.h"
+
+int main(int argc, char *argv[])
+{
+    QApplication app(argc, argv);
+    Dialog dialog;
+    dialog.show();
+    qsrand(QTime(0,0,0).secsTo(QTime::currentTime()));
+    return app.exec();
+}
+[/code]
+
+secsTo(QTime::currentTime())) - возвращает количество секунд до текущего времени
+
+Это статический метод, судя по объявлению:
+
+[code=cpp]
+int QTime::secsTo(const QTime & t) const
+[/code]
+
+Следующая запись говорит о том, что создаётся новый временный объект и вызывается статический метод класс QTime:
+
+[code=cpp]
+QTime(0,0,0).secsTo(QTime::currentTime())
+[/code]
+
+В документации написано, что эта конструкция всегда возвращает число (количество секунд) из диапазона: [-86400; 86400]
+
+Получается, конструкция выше возвращает количество секунд от 00:00:00 до текущего времени

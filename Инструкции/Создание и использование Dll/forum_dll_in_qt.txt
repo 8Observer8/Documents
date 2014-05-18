@@ -1,0 +1,165 @@
+Пошаговая инструкция. Создание и использование Dll
+
+Я разобрался, как создавать и использовать dll в Qt. Написал пошаговую инструкцию, для таких же новичков, как и я:
+
+[b]Инструментарий:[/b]
+Операционная система: Windows 7
+Версия Qt: Qt 5.2.0 for Windows 32-bit (MinGW 4.8, OpenGL)
+
+[b]Создание Dll[/b]
+
+- запускаем Qt Creator
+- в меню выбираем "File" -> "New File or Project..."
+- в разделе "Projects" выбираем "Libraries"
+- в центральном разделе выбираем "C++ Library" -> нажимаем кнопку "Choose..."
+- в выпадающем списке: Shared Library
+- имя проекта: Person
+- выбираем путь, где будет создан проект, к примеру: D:\Documents\Qt\QtDeploying\0001_dll_Person
+- нажимаем "Next" -> "Next" -> "Next" -> "Finish"
+
+Изменяем файл "person.h" следующим образом:
+
+[code=cpp]
+#ifndef PERSON_H
+#define PERSON_H
+
+#include "person_global.h"
+#include <QString>
+
+class PERSONSHARED_EXPORT Person
+{
+public:
+    Person();
+    Person(const QString &firstName, const QString &secondName, int age);
+
+    QString firstName() const;
+    void setFirstName(const QString &firstName);
+
+    QString secondName() const;
+    void setSecondName(const QString &secondName);
+
+    int age() const;
+    void setAge(int age);
+
+private:
+    QString mFirstName;
+    QString mSecondName;
+    int mAge;
+};
+
+#endif // PERSON_H
+[/code]
+
+- создаём реализации для функций, для этого последовательно нажимаем правой кнопкой мыши по каждой функции и выбираем "Refactor" -> выбираем "Add difinition in person.cpp"
+
+Изменяем файл "person.cpp" следующим образом:
+
+[code=cpp]
+#include "person.h"
+
+Person::Person() :
+    mFirstName(""),
+    mSecondName(""),
+    mAge(0)
+{
+}
+
+Person::Person(const QString &firstName, const QString &secondName, int age) :
+    mFirstName(firstName),
+    mSecondName(secondName),
+    mAge(age)
+{
+}
+
+QString Person::firstName() const
+{
+    return mFirstName;
+}
+
+void Person::setFirstName(const QString &firstName)
+{
+    mFirstName = firstName;
+}
+
+QString Person::secondName() const
+{
+    return mSecondName;
+}
+
+void Person::setSecondName(const QString &secondName)
+{
+    mSecondName = secondName;
+}
+
+int Person::age() const
+{
+    return mAge;
+}
+
+void Person::setAge(int age)
+{
+    mAge = age;
+}
+[/code]
+
+Создадим debug-версию dll:
+
+- в меню выбираем "Build" -> "Build Project Person"
+
+Создадим release-версию dll:
+
+- нажимаем кнопку "Projects" на панели слева
+- в разделе "Build Settings" в списке "Edit build configuration" выбираем: Release
+- в разделе "Build Steps" напротив "qmake" нажимаем "Details"
+- в списке "qmake build configuration" выбираем "Release"
+- в поле "Additional arguments" вводим (в двойных кавычках): "CONFIG += release"
+- в меню выбираем "Build" -> "Build Project Person"
+- переходим в папку "release" проект, там находится dll "Person.dll"
+- теперь мы можем использовать в других проектах файлы: person.h, person_global.h и Person.dll
+
+[b]Использование Dll[/b]
+
+- в меню выбираем "File" -> "New File or Project..."
+- в разделе "Projects" выбираем "Applications"
+- в центральном разделе выбираем "Qt Console Application" -> нажимаем кнопку "Choose..."
+- имя проекта: UsageOfPersonDll
+- выбираем путь, где будет создан проект, к примеру: D:\Documents\Qt\QtDeploying\0002_UsageOfPersonDll
+- нажимаем "Next" -> "Next" -> "Finish"
+- копируем в папку с проектом файлы: person.h, person_global.h и Person.dll
+- подключаем к проекту файлы "person.h" и "person_global.h", для этого кликаем правой кнопкой мыши по имени проекта в Qt Creator и выбираем "Add Existing Files" -> выделяем "person.h" и "person_global.h" -> нажимаем "Open"
+- в меню выбираем "Build" -> "Build Project UsageOfPersonDll"
+- копируем файл "Person.dll" из папки "debug" проекта "Person" в папку "debug" проекта "UsageOfPersonDll"
+- копируем файл "Person.dll" из папки "release" проекта "Person" в папку "debug" проекта "UsageOfPersonDll"
+
+- открываем файл "UsageOfPersonDll.pro" и добавляем следующую строку (путь к "Person.dll"):
+[code=cpp]
+LIBS += "..\build-UsageOfPersonDll-Desktop_Qt_5_2_0_MinGW_32bit-Debug\debug\Person.dll"
+[/code]
+
+Примечание. Для построения релизной версии проекта нужно в "UsageOfPersonDll.pro" добавить эту строку:
+[code=cpp]
+LIBS += "..\build-UsageOfPersonDll-Desktop_Qt_5_2_0_MinGW_32bit-Release\release\Person.dll"
+[/code]
+
+Изменяем файл "main.cpp" следующим образом:
+
+[code=cpp]
+#include <QCoreApplication>
+#include "person.h"
+#include <QDebug>
+
+int main(int argc, char *argv[])
+{
+    QCoreApplication a(argc, argv);
+
+    Person Bob("Bob", "Steventson", 20);
+
+    qDebug() << "First Name: " << Bob.firstName();
+    qDebug() << "Second Name: " << Bob.secondName();
+    qDebug() << "Age: " << Bob.age();
+
+    return a.exec();
+}
+[/code]
+
+- в меню выбираем "Build" -> "Run" (или Ctrl+R)

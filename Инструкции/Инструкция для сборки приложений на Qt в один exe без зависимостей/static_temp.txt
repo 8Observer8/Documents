@@ -1,0 +1,7 @@
+переходим в каталог c:\Qt\Qt5.2.1\5.2.1\Src\qtbase\mkspecs\win32-g++ и открываем файл qmake.conf
+
+отрываем терминал Пуск -> Qt 5.2.1 -> 5.2.1 -> MinGW 4.8 (32-bit) -> Qt 5.2.1 for Desktop (MinGW 4.8 32 bit)
+
+cd c:\Qt\Qt5.2.1\5.2.1\Src\qtbase
+
+configure -static -prefix "C:\Qt\Qt5.2.1_static" -gui -multimedia -multimediawidgets -network -qml -sql -testlib -webkit -widgets -bluetooth -positioning -scripttools -serialport -svg -winextras -x11extras -xml -xmlpatterns -opengl desktop -nomake examples -nomake tests

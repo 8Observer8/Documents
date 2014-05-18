@@ -1,0 +1,247 @@
+Пошаговая инструкция. Разработка ПО на Qt C++ по методике TDD (test-driven development)
+
+[B]Инструментарий:[/B]
+- Qt 5.2.0 for Windows 32-bit (MinGW 4.8, OpenGL, 689 MB)
+- Компилятор: MinGW 4.8
+- Операционная система: Windows 7
+
+[B]Введение:[/B]
+
+Принцип TDD (test-driven development - разработка ПО через тестирование) - сначала пишем тесты для пустого модуля (модуль - это функция или класс), а потом реализацию для этого модуля.
+
+Такой способ разработки позволяет:
+
+- описывать функциональность до написания самой функции
+- демонстрировать, что функциональность реализована, как это и требовалось (заказчику, пользователю и\или самому себе)
+- проводить рефакторинг (усовершенствовать код с целью оптимизации и/или для улучшения читабельности) без опасения нарушения функциональности
+
+[B]Инструкция:[/B]
+
+- скачиваем и устанавливаем "Qt 5.2.0 for Windows 32-bit (MinGW 4.8, OpenGL, 689 MB)" http://qt-project.org/downloads
+
+- запускаем Qt Creator
+
+- если у Вас Qt Creator на русском, то я рекомендовал бы переключиться на английский. Для этого выбираем в меню "Инструменты" -> "Параметры..."
+
+- в окне "Параметры" слева выбираем "Среда" -> открываем вкладку "Основные" -> выбираем в выпадающем списке "English" -> нажимаем кнопку "OK" -> перезапускаем Qt Creator
+
+Допустим у нас задание: разработать класс с названием MyDate, в котором будет один метод с названием nameOfMonth(). Этот метод принимает число от 1 до 12 и возвращает название месяца. Если входной параметр метода не входит в диапазан [1, 12], то метод вернёт строку "Error: incorrect input data"
+
+- в меню Qt Creator'а выбираем "File" -> "New File or Project..."
+
+- в разделе "Projects" выбираем "Other Project" -> во второй колонке выбираем "Qt Unit Test"
+
+- нажимаем кнопку "Choose"
+
+- в поле "Name" вводим: TestMyDate
+
+- нажимаем "Next" -> "Next" -> "Next" -> "Finish"
+
+- нажимаем правой кнопкой мыши по проекту в разделе "Projects" -> нажимаем "Add New...", как показано на рисунке:
+
+[URL=http://pixs.ru/showimage/001png_2733611_10594992.png][IMG]http://i7.pixs.ru/storage/9/9/2/001png_2733611_10594992.png[/IMG][/URL]
+
+- в разделе "Files and Clases" выбираем "C++" -> во втором разделе выбираем "C++ Class"
+
+- нажимаем кнопку "Choose"
+
+- в поле "Class name" вводим: MyDate
+
+- нажимаем кнопку "Next" -> нажимаем кнопку "Finish"
+
+- открываем файл "mydate.h" и меняем его содержимое на следующее:
+
+mydate.h
+[CODE]
+#ifndef MYDATE_H
+#define MYDATE_H
+
+#include <QString>
+
+class MyDate
+{
+public:
+    QString nameOfMonth(int n);
+};
+
+#endif // MYDATE_H
+[/CODE]
+
+- нажимаем правой кнопкой по функции nameOfMonth() -> выбираем "Refactor" -> выбираем "Add Definition in myclass.cpp", как показано на рисунке:
+
+[URL=http://pixs.ru/showimage/002png_9685229_10596366.png][IMG]http://i7.pixs.ru/storage/3/6/6/002png_9685229_10596366.png[/IMG][/URL]
+
+- меняем содержимое файла "mydate.cpp" на следующее:
+
+mydate.cpp
+[CODE]
+#include "mydate.h"
+
+QString MyDate::nameOfMonth(int n)
+{
+    return "";
+}
+[/CODE]
+
+- открываем файл "tst_testmydatetest.cpp" и меняем его содержимое на следующее:
+
+tst_testmydatetest.cpp
+[CODE]
+#include <QString>
+#include <QtTest>
+#include "mydate.h"
+
+class TestMyDateTest : public QObject
+{
+    Q_OBJECT
+
+public:
+    TestMyDateTest();
+
+private Q_SLOTS:
+    void testCase1_data();
+    void testCase1();
+};
+
+TestMyDateTest::TestMyDateTest()
+{
+}
+
+void TestMyDateTest::testCase1_data()
+{
+    QTest::addColumn<int>("n");
+    QTest::addColumn<QString>("expected");
+
+    QTest::newRow("nameOfMonth01") << 1 << "January";
+    QTest::newRow("nameOfMonth02") << 2 << "February";
+    QTest::newRow("nameOfMonth03") << 3 << "March";
+    QTest::newRow("nameOfMonth04") << 4 << "April";
+    QTest::newRow("nameOfMonth05") << 5 << "May";
+    QTest::newRow("nameOfMonth06") << 6 << "June";
+    QTest::newRow("nameOfMonth07") << 7 << "July";
+    QTest::newRow("nameOfMonth08") << 8 << "August";
+    QTest::newRow("nameOfMonth09") << 9 << "September";
+    QTest::newRow("nameOfMonth10") << 10 << "October";
+    QTest::newRow("nameOfMonthe11") << 11 << "November";
+    QTest::newRow("nameOfMonth12") << 12 << "December";
+
+    QTest::newRow("nameOfMonthe13") << 0 << "Error: incorrect input data";
+    QTest::newRow("nameOfMonth14") << -1 << "Error: incorrect input data";
+    QTest::newRow("nameOfMonth15") << 13 << "Error: incorrect input data";
+}
+
+void TestMyDateTest::testCase1()
+{
+    MyDate md;
+
+    QFETCH(int, n);
+    QFETCH(QString, expected);
+
+    QString actual = md.nameOfMonth(n);
+    QCOMPARE(actual, expected);
+}
+
+QTEST_APPLESS_MAIN(TestMyDateTest)
+
+#include "tst_testmydatetest.moc"
+[/CODE]
+
+И так, рассмотрим кратко, что мы изменили в файле "tst_testmydatetest.cpp":
+
+- добавили метод testCase1_data() в класс "TestMyDateTest" для инициализации данных
+
+Данные инициализируются так:
+
+[CODE]
+QTest::newRow("nameOfMonth01") << 1 << "January";
+QTest::newRow("nameOfMonth02") << 2 << "February";
+QTest::newRow("nameOfMonth03") << 3 << "March";
+[
+	
+Первыми идут параметры тестируемого метода, а последним - ожидаемый результат.
+
+- добавили функцию сравнения ожидаемого результата и результата, который возвращает тестируемый метод:
+
+[CODE]
+void TestMyDateTest::testCase1()
+{
+    MyDate md;
+
+    QFETCH(int, n);
+    QFETCH(QString, expected);
+
+    QString actual = md.nameOfMonth(n);
+    QCOMPARE(actual, expected);
+}
+[/CODE]
+
+- нажимаем Ctrl+R для построения и запуска программы
+
+- в окне "Application Output" мы можем видеть, что не один из вызовов тестируемого метода не завершился положительно:
+
+[URL=http://pixs.ru/showimage/003png_7433496_10596040.png][IMG]http://i7.pixs.ru/storage/0/4/0/003png_7433496_10596040.png[/IMG][/URL]
+
+- пишем функционал nameOfMonth(), для этого меняем содержимое файла "mydate.cpp" на следующее:
+
+[CODE]
+#include "mydate.h"
+
+QString MyDate::nameOfMonth(int n)
+{
+    QString month;
+
+    switch (n) {
+    case 1:
+        month = "January";
+        break;
+    case 2:
+        month = "February";
+        break;
+    case 3:
+        month = "March";
+        break;
+    case 4:
+        month = "April";
+        break;
+    case 5:
+        month = "May";
+        break;
+    case 6:
+        month = "June";
+        break;
+    case 7:
+        month = "July";
+        break;
+    case 8:
+        month = "August";
+        break;
+    case 9:
+        month = "September";
+        break;
+    case 10:
+        month = "October";
+        break;
+    case 11:
+        month = "November";
+        break;
+    case 12:
+        month = "December";
+        break;
+    default:
+        month = "Error: incorrect input data";
+        break;
+    }
+
+    return month;
+}
+[/CODE]
+
+- нажимаем Ctrl+R для построения и запуска программы
+
+Теперь мы видим, что тесты пройдены успешно:
+
+[URL=http://pixs.ru/showimage/004png_4315808_10596182.png][IMG]http://i7.pixs.ru/storage/1/8/2/004png_4315808_10596182.png[/IMG][/URL]
+
+[B]Примечание:[/B] чтобы отформатировать код (выровнить), нужно нажать Ctrl+A (чтобы выделить), потом нажать Ctrl+I.
+
+Подробнее о TDD можно почитать здесь: ru.wikipedia.org/wiki/Разработка_через_тестирование

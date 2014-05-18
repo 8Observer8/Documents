@@ -1,0 +1,7 @@
+–екомендации по C++
+
+»спользование итераторов более эфективно, чем индексы дл€ list, map и set, но не дл€ vector.
+
+Chapter 17 shows you how to write your own find_all() algorithm.
+
+Consult the УMove SemanticsФ section in Chapter 9 for details on how to add move semantics to you class (for sort() algorithm)

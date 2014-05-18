@@ -1,0 +1,350 @@
+[b]Разработка ПО на Qt c помощью методологии TDD и фреймворка Google Test (GTest)[/b]
+
+[b]Инструментарий[/b]
+
+- Qt 5.2.1 for Windows 32-bit (MinGW 4.8, OpenGL, 634 MB) - http://qt-project.org/downloads
+- GTest - https://code.google.com/p/googletest/downloads/list
+- ОС Windews 7
+
+Подробное описание методологии TDD читайте здесь: http://ru.wikipedia.org/wiki/Разработка_через_тестирование
+
+[b]Сравнение QTest и GTest[/b]
+
+Я уже писал инструкцию по TDD на примере фреймворка QTest: http://www.prog.org.ru/topic_26413_0.html
+
+Но QTest мне не понравился. Вот сравнение QTest и GTest по самым необходимым вещам:
+
+1) QTest не поддерживает тестирование исключений. Для этого приходится выкручиваться самым изуверским способом. В моей инструкции по QTest выше есть есть пример тестирования исключений. Зато в GTest они есть: https://code.google.com/p/googletest/wiki/AdvancedGuide#Exception_Assertions
+
+2) QTest не поддерживает сравнение вещественных чисел (то есть, когда ожидаемые результат и результат работы функции - это вещественные числа). Для этого мне приходилось писать такую функцию:
+
+[code=cpp]
+    static inline bool qFuzzyCompare( double p1, double p2, double delta ) {
+        return ( qAbs( p1 - p2 ) <= delta * qMin( qAbs( p1 ), qAbs( p2 ) ));
+    }
+[/code]
+
+А вот так приходилось сравнивать:
+[code=cpp]
+        result = qFuzzyCompare( points[i].x( ), expected_points[i].x( ), delta );
+        msg = QString( "\nActual: %1"
+                "\nExpected: %2"
+                "\nDelta: %3" ).arg( points[i].x( ) ).arg( expected_points[i].x( ) ).arg( delta );
+        QVERIFY2( result, msg.toStdString( ).c_str( ) );
+[/code]
+
+А GTest имеет удобные макросы для сравнения вещественных чисел: https://code.google.com/p/googletest/wiki/AdvancedGuide#Floating-Point_Comparison Самый интересный из них, в котором сравниваются два вещественный числа с дельтой: ASSERT_NEAR(val1, val2, abs_error);
+
+[b]Инструкция[/b]
+
+Свою инструкцию я написал, полностью опираясь на эту: http://www.bogotobogo.com/cplusplus/google_unit_test_gtest.php
+
+[b]Создание статической библиотеки "libGoogleTest.a"[/b]
+
+- Скачиваем GTest - https://code.google.com/p/googletest/downloads/list
+
+- Распаковываем GTest. Должен быть такой путь: C:\GTEST\gtest-1.7.0 Позже нам будут нужны папки "include" и "src":
+
+[img]http://i7.pixs.ru/storage/6/5/8/195png_4452761_11895658.png[/img]
+
+- Скачиваем и устанавливаем: Qt 5.2.1 for Windows 32-bit (MinGW 4.8, OpenGL, 634 MB) - http://qt-project.org/downloads
+
+- Запускаем Qt Creator
+
+- Если у Вас Qt Creator на русском, то я рекомендовал бы переключиться на английский. Для этого выбираем в меню "Инструменты" -> "Параметры..."
+
+- В окне "Параметры" слева выбираем "Среда" -> открываем вкладку "Основные" -> выбираем в выпадающем списке "English" -> нажимаем кнопку "OK" -> перезапускаем Qt Creator
+
+- В меню Qt Creator'а выбираем "File" -> "New File or Project..."
+
+- В разделе "Projects" выбираем "Libraries" -> во второй колонке выбираем "C++ Library", как показано на рисунке:
+
+[img]http://i6.pixs.ru/storage/1/8/6/196png_1952459_11896186.png[/img]
+
+- Нажимаем кнопку "Choose"
+
+- В поле "Type" выбираем "Statically Linked Library". В поле "Name" пишем: GoogleTest. Указываем путь к проекту: "D:\Documents\Qt\QtUnitTests\0011_SimpleMath", как показано на рисунке:
+
+[img]http://i.pixs.ru/storage/2/4/9/197png_5469929_11896249.png[/img]
+
+- Нажимаем кнопку "Next". Мы видим окно "Kit Selection":
+
+[img]http://i7.pixs.ru/storage/2/7/1/198png_1470485_11896271.png[/img]
+
+- Нажимаем кнопку "Next". Оставляем по умолчанию:
+
+[img]http://i.pixs.ru/storage/3/2/7/199png_6507807_11896327.png[/img]
+
+- Нажимаем кнопку "Next". Мы видим название класса и файлы, которые буду созданы:
+
+[img]http://i.pixs.ru/storage/3/5/7/200png_3463678_11896357.png[/img]
+
+- Нажимаем кнопку "Next". Вы можете выбрать систему контроля версии, либо оставить по умолчанию "<None>". Я выбираю Git:
+
+[img]http://i7.pixs.ru/storage/4/3/1/201png_2706102_11896431.png[/img]
+
+- Нажимаем кнопку "Finish"
+
+- Мы создадим версию библиотеки - "Release". Поэтому нажимаем кнопку на панели слева "GoogleTest-Debug" и выбираем "Release", как показано на рисунке:
+
+[img]http://i.pixs.ru/storage/5/4/7/202png_1289449_11896547.png[/img]
+
+- Перейдём в файл "GoogleTest.pro" и добавим в него две строки:
+
+[code=cpp]
+INCLUDEPATH += "C:/GTEST/gtest-1.7.0/include"
+INCLUDEPATH += "C:/GTEST/gtest-1.7.0"
+[/code]
+
+- Добавим в проект файлы все заголовочные файлы (".h") и только два файла реализации (".cс") из папок: "C:\GTEST\gtest-1.7.0\include" и "C:\GTEST\gtest-1.7.0\src". Для этого кликаем правой кнопкой мыши по названию проекта "GoogleTest" -> выбираем "Add Existing Files...". Как показано на рисунке:
+
+[img]http://i.pixs.ru/storage/7/1/7/203png_2741372_11896717.png[/img]
+
+- После добавления указанных выше файлов, должна получиться следующая картина:
+
+[img]http://i7.pixs.ru/storage/9/5/0/204png_7997008_11896950.png[/img]
+
+- Нажимаем кнопку "Build Project" на панели слева (или Ctrl+B). Как показано на рисунке:
+
+[img]http://i.pixs.ru/storage/0/0/3/205png_5116927_11897003.png[/img]
+
+- После построения мы обнаружим статическую библиотеку: D:\Documents\Qt\QtUnitTests\0011_SimpleMath\build-GoogleTest-Desktop_Qt_5_2_1_MinGW_32bit-Release\release\libGoogleTest.a
+
+- Копируем библиотеку, чтобы она лежала по следующему пути: C:\GTEST\lib. Как показано на рисунке:
+
+[img]http://i.pixs.ru/storage/0/5/1/206png_6041733_11897051.png[/img]
+
+- Теперь фреймворк Google Test готов к использованию. Нам необходимо будет подключать к тестовым проектам заголовочный файл "gtest.h" и статическую библиотеку "libGoogleTest.a"
+
+[b]Создаём заглушку разрабатываемой функции[/b]
+
+- В меню Qt Creator'а выбираем "File" -> "New File or Project..."
+
+- В разделе "Projects" выбираем "Other Project" -> во второй колонке выбираем "Empty Qt Project", как показано на рисунке:
+
+[img]http://i.pixs.ru/storage/2/3/3/207png_6627405_11897233.png[/img]
+
+- Нажимаем кнопку "Choose"
+
+- В поле "Name" пишем: SimpleMath. Указываем путь к проекту: "D:\Documents\Qt\QtUnitTests\0011_SimpleMath", как показано на рисунке:
+
+[img]http://i.pixs.ru/storage/3/0/4/208png_6029566_11897304.png[/img]
+
+- Нажимаем кнопку "Next". Мы видим окно "Kit Selection":
+
+[img]http://i7.pixs.ru/storage/3/3/4/209png_4889877_11897334.png[/img]
+
+- Нажимаем кнопку "Next". Вы можете выбрать систему контроля версии, либо оставить по умолчанию "<None>". Я выбираю Git:
+
+[img]http://i7.pixs.ru/storage/3/6/6/210png_9128807_11897366.png[/img]
+
+- Нажимаем кнопку "Finish"
+
+- Создадим файл "SimpleMath.h". В этом файле будет храниться функция, которую мы будем разрабатывать. Кликаем правой кнопкой мыши по названию проекта "SimpleMath" и выбираем "Add New...", как показано на рисунке:
+
+[img]http://i.pixs.ru/storage/2/0/1/211png_5425561_11898201.png[/img]
+
+- В разделе "Files and Classes" выбираем "C++" -> во второй колонке выбираем "C++ Header File", как показано на рисунке:
+
+[img]http://i6.pixs.ru/storage/2/5/2/212png_5397525_11898252.png[/img]
+
+- Нажимаем кнопку "Choose"
+
+- В поле "Name" пишем: SimpleMath
+
+- Нажимаем кнопку "Next". Нажимаем кнопку "Finish"
+
+- В файле "SimpleMath.h" пишем заглушку разрабатываемой функции:
+
+[code=cpp]
+#ifndef SIMPLEMATH_H
+#define SIMPLEMATH_H
+
+int cubic( int n ) {
+    return 0;
+}
+
+#endif // SIMPLEMATH_H
+[/code]
+
+- Создадим файл "main.cpp", в котором будет вызываться функция cubic(). Результат будет выводиться на экран. Кликаем правой кнопкой мыши по названию проекта "SimpleMath" и выбираем "Add New...", как показано на рисунке:
+
+[img]http://i.pixs.ru/storage/2/0/1/211png_5425561_11898201.png[/img]
+
+- В разделе "Files and Classes" выбираем "C++" -> во второй колонке выбираем "C++ Source File", как показано на рисунке:
+
+[img]http://i.pixs.ru/storage/4/1/9/213png_2009222_11898419.png[/img]
+
+- Нажимаем кнопку "Choose"
+
+- В поле "Name" пишем: main
+
+- В файле "main.cpp" пишем код вызова функции и вывод результата на экран:
+
+[code=cpp]
+#include <iostream>
+#include "SimpleMath.h"
+
+int main( ) {
+
+    // Input Value
+    int n = 10;
+
+    // Calc Cubic
+    int result = cubic( n );
+
+    // Print Result
+    std::cout << "result = " << result << std::endl;
+
+    return 0;
+}
+[/code]
+
+- Запустим приложение, для этого нажимаем кнопку "Run" (или Ctrl+R), как показано на рисунке:
+
+[img]http://i.pixs.ru/storage/5/5/9/214png_9307087_11898559.png[/img]
+
+- Так как реализация функции ещё не написана, то мы получаем вывод равный нулю:
+
+[img]http://i7.pixs.ru/storage/6/2/0/215png_1921292_11898620.png[/img]
+
+[b]Создаём проект для разработки-тестирования функции cubic()[/b]
+
+- В разделе "Projects" выбираем "Other Project" -> во второй колонке выбираем "Empty Qt Project", как показано на рисунке:
+
+[img]http://i.pixs.ru/storage/2/3/3/207png_6627405_11897233.png[/img]
+
+- Нажимаем кнопку "Choose"
+
+- В поле "Name" пишем: Cubic_gtests. Указываем путь к проекту: "D:\Documents\Qt\QtUnitTests\0011_SimpleMath\Tests\SimpleMath_gtests\Cubic_gtests", как показано на рисунке:
+
+[img]http://i7.pixs.ru/storage/8/0/3/216png_5403237_11898803.png[/img]
+
+Примечание. Рекомендую создавать отдельную папку для тестов "Tests". В папке "Tests" отдельные папки для классов, в которых будут проекты для тестирования методов (как на рисунке выше). На данный момент, мне кажется, это удобно.
+
+- Нажимаем кнопку "Next". Мы видим окно "Kit Selection":
+
+[img]http://i6.pixs.ru/storage/8/5/1/217png_7837025_11898851.png[/img]
+
+- Нажимаем кнопку "Next". Вы можете выбрать систему контроля версии, либо оставить по умолчанию "<None>". Я выбираю Git:
+
+[img]http://i7.pixs.ru/storage/8/6/6/218png_1839735_11898866.png[/img]
+
+- Нажимаем кнопку "Finish"
+
+- Подсоединим к проекту заголовочный файл "gtest.h" и библиотеку "libGoogleTest.a". Для это добавляем в файл "Gubic_gtest.pro" путь к заголовочным файлам GTest и абсолютный путь к библиотеке "libGoogleTest.a".
+
+[code=cpp]
+INCLUDEPATH += "C:/GTEST/gtest-1.7.0/include"
+LIBS += "C:/GTEST/lib/libGoogleTest.a"
+[/code]
+
+- Добавим в проект файл "gtest.h" Для этого кликаем правой кнопкой мыши по названию проекта "Cubic_gtests" -> выбираем "Add Existing Files...". Как показано на рисунке:
+
+[img]http://i6.pixs.ru/storage/2/4/3/221png_9837222_11899243.png[/img]
+
+- Добавим файл "gtest.h", который находится по этому пути: C:\GTEST\gtest-1.7.0\include\gtest\
+
+- По аналогии выше, добавим файл "SimpleMath.h"
+
+Примечание. Если мы тестируем класс, который имеет реализацию (файл ".cpp"), то этот файл мы тоже должны добавить.
+
+- Нам надо добавить путь к файлу "SimpleMath.h". Для этого открываем файл "Cubic_gtests.pro". Находим строку:
+
+[img]http://i6.pixs.ru/storage/5/2/6/222png_4249793_11899526.png[/img]
+
+- Из строки выше формируем следующую:
+
+[code=cpp]
+INCLUDEPATH += "../../../../SimpleMath"
+[/code]
+
+- Создадим файл "main.cpp", в котором будут содержаться тесты для разрабатываемой функции cubic(). Кликаем правой кнопкой мыши по названию проекта "Cubic_gtests" и выбираем "Add New...", как показано на рисунке:
+
+[img]http://i6.pixs.ru/storage/9/2/7/219png_3879078_11898927.png[/img]
+
+- В разделе "Files and Classes" выбираем "C++" -> во второй колонке выбираем "C++ Source File", как показано на рисунке:
+
+[img]http://i.pixs.ru/storage/4/1/9/213png_2009222_11898419.png[/img]
+
+- Нажимаем кнопку "Choose"
+
+- В поле "Name" пишем: main. Как показано на рисунке:
+
+[img]http://i7.pixs.ru/storage/9/9/6/220png_8859429_11898996.png[/img]
+
+- Нажимаем кнопку "Next". Нажимаем кнопку "Finish"
+
+- Содержимое файла "main.cpp":
+
+[code=cpp]
+#include "gtest/gtest.h"
+#include "SimpleMath.h"
+
+TEST( testMath01, myCubeTest ) {
+    int input = 10;
+    int expected = 1000;
+
+    int actual = cubic( input );
+    EXPECT_EQ( expected, actual );
+}
+
+TEST( testMath02, myCubeTest ) {
+    int input = 3;
+    int expected = 27;
+
+    int actual = cubic( input );
+    EXPECT_EQ( expected, actual );
+}
+
+int main( int argc, char **argv ) {
+    ::testing::InitGoogleTest( &argc, argv );
+    return RUN_ALL_TESTS( );
+}
+[/code]
+
+- Запустим приложение, для этого нажимаем кнопку "Run" (или Ctrl+R), как показано на рисунке:
+
+[img]http://i.pixs.ru/storage/5/5/9/214png_9307087_11898559.png[/img]
+
+- Мы увидим такой вывод, который означает что результат работы функции не совпал с ожидаемым:
+
+[quote]
+../Cubic_gtests/main.cpp:9: Failure
+Value of: actual
+  Actual: 0
+Expected: expected
+Which is: 1000
+
+../Cubic_gtests/main.cpp:17: Failure
+Value of: actual
+  Actual: 0
+Expected: expected
+Which is: 9
+
+2 FAILED TESTS
+[/quote]
+
+- Теперь время написать реализацию разрабатываемой функции:
+
+SimpleMath.h
+[code=cpp]
+#ifndef SIMPLEMATH_H
+#define SIMPLEMATH_H
+
+int cubic( int n ) {
+    return n * n * n;
+}
+
+#endif // SIMPLEMATH_H
+[/code]
+
+- Запускаем тесты (Ctrl+R). Мы видим, что все тесты выполнились нормально:
+
+[quote]
+[  PASSED  ] 2 tests.
+[/quote]
+
+Здесь весь код проектов:
+SimpleMath: https://github.com/8Observer8/SimpleMath
+Cubic_gtests: https://github.com/8Observer8/Cubic_gtests

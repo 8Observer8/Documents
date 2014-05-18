@@ -1,0 +1,211 @@
+Сохранить названия песен Высоцкого с трёх дисков
+Диск 2
+Памятник - 4.22
+Татуировка - 2.02
+Большой Каретный - 2.28
+"Сколько я не старался" - 2.13
+Штрафные батальоны - 3.04
+Песня завистника - 1.37
+Песня про чёрта - 2.10
+Письмо из деревни мужу - 2.18
+Письмо из Москвы в деревню
+
+Написать иструкции TDD
+
+Написать объяснения с комментариями для Assimil
+
+Исправить меню сайта
+
+
+График падающего шарика
+cppFiveAndFive на C++
+
+Мониторить русские и зарубежные фрилансерные сайты
+Разбирать сообщения Kitty
+Накопить денег для регулярных занятий по Го с Kitty
+Освоить все системы контроля версиями
+Освоить все базы данных
+Написать программы Hello World со сложением (для отладчика) на всех изучаемых языках. В том числе на MASM. Продублировать на английском. Дать список Kitty
+Сделать по TDD две версии примеров: упращённая и расширенная
+Повторить FiveAndFive и FiveAndFiveTests на всех изучаемых мною языках:
+JavaScript (QUnit)
+PHP (только FiveAndFive)
+C#
+Java
+
+My First Computer Programm
+- Assembler (MASM)
+- C
+- C++
+- C#
+- Java
+- PHP
+- JavaScript
+- jQuery
+Сделать быстро первоначальный список и отдать на проверку Kitty:
+- установка
+
+SoftWare Development
+
+Abbreviations:
+IDE - Integrated Development Environment
+TDD - Test Driven Development
+GUI - Graphical User Interface
+
+- C++
+   - instulling IDE
+   - "Hello, World" application
+   - Debuging
+   - TDD simple version
+   - TDD advanced version
+   - GUI
+
+- C#
+   - instulling IDE
+   - "Hello, World" application
+   - Debuging
+   - TDD simple version
+   - TDD advanced version
+
+- Java
+   - instulling IDE
+   - "Hello, World" application
+   - Debuging
+   - TDD simple version
+   - TDD advanced version
+
+- JavaScript
+   - instulling IDE
+   - "Hello, World" application
+   - Debuging
+   - TDD simple version
+   - TDD advanced version
+
+- PHP
+   - instulling IDE
+   - "Hello, World" application
+   - Debuging
+
+in Future
+Assembler
+C
+
+Получить сертификат по Qt
+Получить сертификат по английскому
+
+QML
+Сделать график для примера HelloBullet (падение шарика)
+Реализовать падение кубика на поверхность. При нажатии на проблем кубик начинает падать, отскакивает и приземляется.
+Собрать статически приложение с qwidgets
+Решить задачу
+Пример с динамическим графиком
+Работа с последовательным портом
+Загрузить голову обезьяны
+Научиться ходить по поверхности в виртуальном мире
+
+Скрывать транскрипцию по нажатию на кнопке
+
+
+
+See step by step instruction about Test Driven Development: link
+
+- купить абонемент в бассейн (2 раза в неделю)
+- сходить на консультацию с стомотологу
+- сходить на консультацию с платному ЛОР'у
+
+Сделать на своём сайте список моих примеров
+- делать простой список, а далее развить идею с accordion (jQuery)
+- сразу же дублировать примеры на английском сайте
+
+Закачать Xampp, Netbeans и Java для Pardis (и дать ссылку на инструкцию)
+
+Динамический график на Qwt и Qml
+
+Сделать перевод из строк в число и обратно с помощью boost
+
+Загрузить кубик и оформить пример на своём сайте (потом на форуме)
+Загрузить макет обезъяны и оформить пример на своём сайте (потом на форуме)
+
+Делать проекты, которые формлять на русском и английском сайте:
+- переводить иструкции
+- писать новые инструкции
+- делать законченные (небольшие) проекты с описанием (программы сбора, отображения и хранения данных)
+
+Решить задачу five_and_five:
+- Java (JUnit)
+- C# (MSUnit)
+- JavaScript (QUnit)
+- PHP (PHPUnit)
+
+Расписать планы
+
+Начать писать загрузчик координат (без регуряных выражений; использовать метод split())
+Начать писать график для датчиков на Qwt
+Написать несколько тестов для задач
+
+Научиться танцевать танго
+
+Add to CV:
+- C/C++ -> Qt -> Java -> C# -> PHP -> JavaScript -> jQuery -> MySQL -> SQLite -> HTML5 -> CSS3
+- Bullet -> Unity3D -> Blender
+- Assembler -> OllyDbg
+- 8052 -> PIC -> ARM -> AVR
+
+Free Lessons in C++ and Qt
+- make presintion on 
+
+Write instruction about "My first PHP program"
+- create a file
+
+Read about exceptions
+- read my class Expeption (and without class)
+
+Create a list of verbs
+- create the file: en_list_of_verbs
+
+Simple Sructure "adjective"
+- write about words "good" and "bad"
+
+Create project with reading a file by exeption
+- create a first project
+
+To fill a tooth
+- to get a work
+- to go in consultation
+
+To blow one's nose
+- to get a work
+- to go in consultation
+
+To go in indoor swimming pool
+- to get a work
+- to go in indoor swimming pool
+
+To study speaking English with Lera (in Sataday after indoor swimming pool)
+- to get a work
+- after one month work
+
+Sometime
+Meet with Natalia for the go
+- to get a work
+- 
+
+To play in the go with girl fomr vk.com
+- to get a work
+- write to girl
+
+To go in dance
+- to get a work
+- to ask Lera about dance school
+
+To go in rock climbing
+- to get a work
+- to go in rock climbing
+
+The art of self-defense
+- to find the art of self-defense
+
+To make Somedia presentation for Pardis (in php)
+- to make simple data collection
+- to make simple data storage
+- to make simple data mapping

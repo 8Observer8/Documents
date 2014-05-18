@@ -1,0 +1,154 @@
+[B]Тестирование методов класса, которые возвращают вещественные числа[/B]
+
+Следующий пример отличается от того, что в инструкции тем, что в этом, тестируемых методов два и они возвращают вещественные числа. Тестируем методы "расчёт_прощади" "расчёт_объёма" класса "Сфера".
+
+К сожалению, в Qt нет макросов для сравнения вещественных чисел с заданной точностью, наподобие, к примеру, макроса из CppUnit (который сравнивает ожидаемый результат (expected) и результат работы функции (actual) с заданой точностью дельта (delta)):
+
+[CODE]
+CPPUNIT_ASSERT_DOUBLES_EQUAL(expected, actual, delta);
+[/CODE]
+
+Поэтому будем использовать свою функцию, реализацию которой мне подсказали на этом форуме год назад: http://www.qtcentre.org/threads/52904-QtTest-How-to-compare-double-numbers?highlight=
+
+[CODE]
+static inline bool qFuzzyCompare(double p1, double p2)
+{
+    return (qAbs(p1 - p2) <= 0.000000000001 * qMin(qAbs(p1), qAbs(p2)));
+}
+[/CODE]
+
+Все файлы проекта TestShere:
+
+sphere.h
+[CODE]
+#ifndef SPHERE_H
+#define SPHERE_H
+
+class Sphere
+{
+public:
+    double calcArea(double radius);
+    double calcVolume(double radius);
+};
+
+#endif // SPHERE_H
+[/CODE]
+
+sphere.cpp
+[CODE]
+#include "sphere.h"
+#include <cmath>
+
+double Sphere::calcArea(double radius) {
+    double area = 4.0 * M_PI * pow(radius, 2.0);
+    return area;
+}
+
+double Sphere::calcVolume(double radius) {
+    double volume = (4.0/3.0) * M_PI * pow(radius, 3.0);
+    return volume;
+}
+[/CODE]
+
+tst_testspheretest.cpp
+[CODE]
+#include <QString>
+#include <QtTest>
+#include "sphere.h"
+#include <QDebug>
+
+class TestSphereTest : public QObject
+{
+    Q_OBJECT
+
+public:
+    TestSphereTest();
+
+    static inline bool qFuzzyCompare(double p1, double p2)
+    {
+        return (qAbs(p1 - p2) <= 0.0001 * qMin(qAbs(p1), qAbs(p2)));
+    }
+
+private Q_SLOTS:
+    void testCalcArea_data();
+    void testCalcArea();
+
+    void testCalcVolume_data();
+    void testCalcVolume();
+};
+
+TestSphereTest::TestSphereTest()
+{
+}
+
+void TestSphereTest::testCalcArea_data()
+{
+    QTest::addColumn<double>("radius");
+    QTest::addColumn<double>("expected");
+
+    QTest::newRow("calcArea01") << 6.0 << 452.3893;
+    QTest::newRow("calcArea02") << 7.0 << 615.7527;
+    QTest::newRow("calcArea03") << 8.0 << 804.2477;
+}
+
+void TestSphereTest::testCalcArea()
+{
+    Sphere s;
+
+    QFETCH(double, radius);
+    QFETCH(double, expected);
+
+    double actual = s.calcArea(radius);
+
+    bool result = qFuzzyCompare(actual, expected);
+    QVERIFY2(result, "Failure");
+}
+
+void TestSphereTest::testCalcVolume_data()
+{
+    QTest::addColumn<double>("radius");
+    QTest::addColumn<double>("expected");
+
+    QTest::newRow("calcVolume01") << 6.0 << 904.7787;
+    QTest::newRow("calcVolume02") << 7.0 << 1436.7550;
+    QTest::newRow("calcVolume03") << 8.0 << 2144.6606;
+}
+
+void TestSphereTest::testCalcVolume()
+{
+    Sphere s;
+
+    QFETCH(double, radius);
+    QFETCH(double, expected);
+
+    double actual = s.calcVolume(radius);
+
+    bool result = qFuzzyCompare(actual, expected);
+    QVERIFY2(result, "Failure");
+}
+
+QTEST_APPLESS_MAIN(TestSphereTest)
+
+#include "tst_testspheretest.moc"
+[/CODE]
+
+TestShere.pro
+[CODE]
+QT       += testlib
+
+QT       -= gui
+
+TARGET = tst_testspheretest
+CONFIG   += console
+CONFIG   -= app_bundle
+
+TEMPLATE = app
+
+
+SOURCES += tst_testspheretest.cpp \
+    sphere.cpp
+DEFINES += SRCDIR=\\\"$$PWD/\\\"
+
+HEADERS += \
+    sphere.h
+[/CODE]

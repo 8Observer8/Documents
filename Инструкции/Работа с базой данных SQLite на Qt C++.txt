@@ -1,0 +1,278 @@
+[b]Инструментарий[/b]
+
+- SDK Qt 5.2.0
+- ОС Windows 7
+
+Примечание. Инструкция составлена по видео: [url]http://www.youtube.com/watch?v=cc06D3wuTn4[/url]
+
+[b]Инструкция[/b]
+
+- открываем браузер Mozilla Firefox
+- в меню браузера выбираем "Web Developer" -> выбираем "SQLite Manager"
+- в меню "SQLite Manager" выбираем "Database" -> выбираем "New Database"
+- в открывшемся окне вводим имя базы данных, к примеру: Accounts
+
+Примечание. При выборе пути для сохранения базы данных, нужно учитывать, что этот путь должен совпадать с тем путём, который вернёт статический метод QDir::currentPath()
+
+- в меню выбираем "Table" -> "Create Table"
+
+- заполняем форму, как показано на рисунке:
+
+[img]http://i.pixs.ru/storage/7/3/8/001png_1661540_11217738.png[/img]
+
+- заполняем таблицу, как показано на рисунке:
+
+[img]http://i.pixs.ru/storage/7/5/1/002png_4860268_11217751.png[/img]
+
+- запускаем Qt Creator
+- если у Вас Qt Creator на русском, то я рекомендовал бы переключиться на английский. Для этого выбираем в меню "Инструменты" -> "Параметры..."
+- в окне "Параметры" слева выбираем "Среда" -> открываем вкладку "Основные" -> выбираем в выпадающем списке "English" -> нажимаем кнопку "OK" -> перезапускаем Qt Creator
+- в меню Qt Creator'а выбираем "File" -> "New File or Project..." (Ctrl+N)
+- в разделе "Projects" выбираем "Applications" -> во второй колонке выбираем "Qt Widgets Application"
+- нажимаем кнопку "Choose"
+- в поле "Name" вводим: DatabaseLoginForm и нажимаем "Next" (2 раза)
+- в поле "Base Class" выбираем "QDialog" -> нажимаем "Next" -> нажимаем "Finish"
+- скачиваем исходный код проекта (кнопка "Download ZIP" справа-внизу): [url]https://github.com/8Observer8/DatabaseLoginForm[/url]
+- заменяем файлы текущего проекта на файлы из скаченного
+- нажимаем Ctrl+R, чтобы запустить программу
+
+P.S. На всякий случай привожу все файлы проекта здесь
+
+[b]DatabaseLoginForm.pro[/b]
+[code=cpp]
+QT += core gui sql
+
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+
+TARGET = DatabaseLoginForm
+TEMPLATE = app
+
+
+SOURCES += main.cpp \
+           dialog.cpp
+
+HEADERS += dialog.h
+
+FORMS += dialog.ui
+[/code]
+
+[b]main.cpp[/b]
+[code=cpp]
+#include "dialog.h"
+#include <QApplication>
+
+int main(int argc, char *argv[])
+{
+    QApplication a(argc, argv);
+    Dialog w;
+    w.show();
+    
+    return a.exec();
+}
+[/code]
+
+[b]dialog.h[/b]
+[code=cpp]
+#ifndef DIALOG_H
+#define DIALOG_H
+
+#include <QDialog>
+#include <QDebug>
+#include <QtSql>
+#include <QFileInfo>
+#include <QMessageBox>
+
+namespace Ui {
+class Dialog;
+}
+
+class Dialog : public QDialog
+{
+    Q_OBJECT
+    
+public:
+    explicit Dialog(QWidget *parent = 0);
+    ~Dialog();
+    
+private slots:
+    void on_btnLogin_clicked();
+    void on_btnClear_clicked();
+
+private:
+    Ui::Dialog *ui;
+    QSqlDatabase myDB;
+};
+
+#endif // DIALOG_H
+[/code]
+
+[b]dialog.cpp[/b]
+[code=cpp]
+#include "dialog.h"
+#include "ui_dialog.h"
+
+Dialog::Dialog(QWidget *parent) :
+    QDialog(parent),
+    ui(new Ui::Dialog)
+{
+    ui->setupUi(this);
+
+    myDB = QSqlDatabase::addDatabase("QSQLITE");
+
+    QString pathToDB = QDir::currentPath()+QString("/Accounts.sqlite");
+    myDB.setDatabaseName(pathToDB);
+
+    QFileInfo checkFile(pathToDB);
+
+    if (checkFile.isFile()) {
+        if (myDB.open()) {
+            ui->lblResult->setText("[+] Connected to Database File");
+        }
+        else {
+            ui->lblResult->setText("[!] Database File was not opened");
+        }
+    }
+    else {
+        ui->lblResult->setText("[!] Database File does not exist");
+    }
+}
+
+Dialog::~Dialog()
+{
+    delete ui;
+    qDebug() << "Closing the connection to Database file on exist";
+    myDB.close();
+}
+
+void Dialog::on_btnClear_clicked()
+{
+    ui->txtUser->setText("");
+    ui->txtPass->setText("");
+}
+
+void Dialog::on_btnLogin_clicked()
+{
+    QString Username, Password;
+
+    Username = ui->txtUser->text();
+    Password = ui->txtPass->text();
+
+    if (!myDB.isOpen()) {
+        qDebug() << "No connection to Database";
+        return;
+    }
+
+    QSqlQuery qry;
+
+    if (qry.exec("SELECT Username, Password, Role FROM Users WHERE Username=\'" + Username +
+                 "\' AND Password=\'" + Password + "\'"))
+    {
+        if (qry.next()) {
+            ui->lblResult->setText("[+] Valid Username and Password");
+            QString msg = "Username = " + qry.value(0).toString() + "\n" +
+                    "Password = " + qry.value(1).toString() + "\n" +
+                    "Role = " + qry.value(2).toString() + "\n";
+            QMessageBox::warning(this, "Login was successful", msg);
+        }
+        else {
+            ui->lblResult->setText("[-] Wrong Username or Password");
+        }
+    }
+    else {
+        ui->lblResult->setText("[-] Wrong query");
+    }
+}
+[/code]
+
+[b]dialog.ui[/b]
+[code=cpp]
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>306</width>
+    <height>106</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>Username:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="txtUser"/>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QLabel" name="label_2">
+         <property name="text">
+          <string>Password:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="txtPass">
+         <property name="echoMode">
+          <enum>QLineEdit::Password</enum>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+   <item row="0" column="1">
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <item>
+      <widget class="QPushButton" name="btnLogin">
+       <property name="text">
+        <string>Login</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnClear">
+       <property name="text">
+        <string>Crear</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="lblResult">
+     <property name="frameShape">
+      <enum>QFrame::Box</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <property name="text">
+      <string>[+] Status</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections/>
+</ui>
+[/code]

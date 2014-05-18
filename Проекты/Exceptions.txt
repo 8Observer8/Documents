@@ -1,0 +1,303 @@
+Обработка ошибок без исключений и с помощью исключений
+
+Привет!
+
+Расскажите, пожалуйста, о своём опыте, как вы на практике обрабатываете ошибки в ваших приложениях на Qt. Применяете исключения или нет? Чем чревато применение исключений в приложениях на Qt? В применении исключений больше пользы или вреда? Улучшают ли исключения архитектуру программного проекта?
+
+У меня есть пример. В этом примере открывается текстовый файл, из него читаются данные и данные записываются в другой текстовый файл.
+
+[b]Вариант без исключений[/b]
+
+Как я понимаю, есть несколько способов возвращать ошибку и значение из функции:
+
+1) Функция возвращает 0 при отсутствии ошибок и -1 в случае ошибки. Посмотреть код ошибки можно с помощью глобальной переменной errno (глобальной для потока). Значение функции возвращаем через ссылку-параметр функции.
+
+2) Функция возвращает 0 в случае ошибки, так как 0 в C и C++ - это false. Функцию, тогда можно вызывать так: if ( func( ) ). Посмотреть код ошибки можно с помощью глобальной переменной errno. Значение функции возвращаем через ссылку-параметр функции.
+
+3) Функция возвращает, как значение, так и код ошибки через структуру, либо класс, либо std::pair, либо std::tuple
+
+4) Слышал, есть ещё способ с nullptr. Но так пример и не нашёл.
+
+5) Ещё я слышал есть механизм setjmp()/longjmp(). Но его в C++ нельзя использовать, там какая-то замута с конструкторами, деструкторами и стеком. Да и в C его не используют (или не рекомендуют)
+
+6) Функция возвращает 0 при отсутствии ошибок и код ошибки (errno не используется). Значение функции возвращаем через ссылку-параметр функции (можно сделать наоборот, что функция будет возвращать значение, а код ошибки через ссылку-параметр).
+
+Пример без исключений:
+[code=cpp]
+#include <QCoreApplication>
+#include <QFile>
+#include <QTextStream>
+#include <iostream>
+
+//! Error codes
+enum ErrorType {
+    //! None errors
+    errNone = 0,
+
+    //! Error of the opening of a file
+    errFileOpen = -1000,
+
+    //! Error of the writing of a file
+    errFileWrite = -1001,
+
+    //! Wrong data
+    errDataBad = -5000
+};
+
+ErrorType readData( const QString &fileName, QString &data );
+ErrorType writeResult( const QString &fileName, QString &data );
+void showData( const QString &data );
+ErrorType showError( const QString &fileName, ErrorType errorCode );
+
+/*!
+ * Working with a text file
+ */
+int main( int argc, char *argv[] ) {
+    QCoreApplication a( argc, argv );
+
+    QString data;
+    ErrorType errorCode = ErrorType::errNone;
+
+    // Read data from a file
+    QString iFileName = QString( "input.txt" );
+    errorCode = readData( iFileName, data );
+    if ( errorCode != ErrorType::errNone ) {
+        return showError( iFileName, errorCode );
+    }
+
+    // Show data on the screen
+    showData( data );
+
+    // Data processing
+    data += QString( ", World" );
+
+    // Write data to a file
+    QString oFileName = QString( "output.txt" );
+    writeResult( oFileName, data );
+    if ( errorCode != ErrorType::errNone ) {
+        return showError( oFileName, errorCode );
+    }
+
+    return a.exec( );
+}
+
+/*!
+ * Read data from the file
+ * \param fileName File name
+ * \param data data
+ * \return Error code
+ */
+ErrorType readData( const QString &fileName, QString &data ) {
+    QFile file( fileName );
+    if ( !file.open( QIODevice::ReadOnly ) ) {
+        return ErrorType::errFileOpen;
+    }
+
+    data = file.readAll( );
+
+    file.close( );
+    return ErrorType::errNone;
+}
+
+/*!
+ * Write data to the file
+ * \param fileName Fleile name
+ * \param data Data
+ * \return Error code
+ */
+ErrorType writeResult( const QString &fileName, QString &data ) {
+    QFile file( fileName );
+
+    if ( !file.open( QIODevice::WriteOnly ) ) {
+        return ErrorType::errFileOpen;
+    }
+
+    QTextStream stream( &file );
+    stream << data;
+    file.close( );
+
+    if ( stream.status( ) != QTextStream::Ok ) {
+        return ErrorType::errFileWrite;
+    }
+
+    return ErrorType::errNone;
+}
+
+/*!
+ * Show data on the screen
+ * \param data Data
+ */
+void showData( const QString &data ) {
+    std::cout << data.toStdString( ) << std::endl;
+}
+
+/*!
+ * Write the error code to the file
+ * \param fileName File name
+ * \param errorCode Error code
+ * \return Error code
+ */
+ErrorType showError( const QString &fileName, ErrorType errorCode ) {
+    switch ( errorCode ) {
+        case ErrorType::errFileOpen:
+            std::cerr << "Error: cannot open the file " << fileName.toStdString( ) << std::endl;
+            break;
+        case ErrorType::errFileWrite:
+            std::cerr << "Error: cannot write to the file " << fileName.toStdString( ) << std::endl;
+            break;
+        case ErrorType::errDataBad:
+            std::cerr << "Error: incorrect data in the file " << fileName.toStdString( ) << std::endl;
+            break;
+        default:
+            std::cerr << "Error code: " << errorCode << "; file name: " << fileName.toStdString( ) << std::endl;
+            break;
+    }
+
+    return errorCode;
+}
+[/code]
+
+[b]Пример с исключениями[/b]
+
+[code=cpp]
+#include <QCoreApplication>
+#include <QFile>
+#include <QTextStream>
+#include <QVector>
+#include <iostream>
+#include <exception>
+
+void readData( const QString &fileName, QVector<int> &arr )
+throw (std::invalid_argument, std::runtime_error);
+
+void writeResult( const QString &fileName, QVector<int> &arr )
+throw (std::invalid_argument, std::runtime_error);
+
+void showData( const QVector<int> &arr );
+
+/*!
+ * Working with a text file
+ */
+int main( int argc, char *argv[] ) {
+    QCoreApplication a( argc, argv );
+
+    // Read data from a file
+    QString iFileName = QString( "input.txt" );
+    QVector<int> arr;
+    try {
+        readData( iFileName, arr );
+    } catch ( const std::exception &e ) {
+        std::cerr << e.what( ) << std::endl;
+        return 1;
+    }
+
+    // Show data on the screen
+    showData( arr );
+
+    // Data processing
+    arr.push_back( 100 );
+
+    // Write data to a file
+    QString oFileName = QString( "output.txt" );
+    try {
+        writeResult( oFileName, arr );
+    } catch ( const std::exception &e ) {
+        std::cerr << e.what( ) << std::endl;
+        return 1;
+    }
+
+    return a.exec( );
+}
+
+/*!
+ * Read data from the file
+ * \param fileName File name
+ * \param data data
+ */
+void readData( const QString &fileName, QVector<int> &dest )
+throw (std::invalid_argument, std::runtime_error) {
+    QFile file( fileName );
+
+    if ( !file.open( QIODevice::ReadOnly ) ) {
+        std::string error = "Unable to open the file " + fileName.toStdString( );
+        throw std::invalid_argument( error );
+    }
+
+    QTextStream stream( &file );
+
+    QString input;
+    do {
+        stream >> input;
+        bool ok;
+        int value = input.toInt( &ok );
+        if ( (ok) && (stream.status( ) == QTextStream::Ok) ) {
+            dest.push_back( value );
+        } else if ( !stream.atEnd( ) ) {
+            std::string error = "Unable to read file " + fileName.toStdString( );
+            throw std::runtime_error( error );
+        }
+    } while ( !stream.atEnd( ) );
+}
+
+/*!
+ * Write data to the file
+ * \param fileName Fleile name
+ * \param data Data
+ * \return Error code
+ */
+void writeResult( const QString &fileName, QVector<int> &arr )
+throw (std::invalid_argument, std::runtime_error) {
+    QFile file( fileName );
+
+    if ( !file.open( QIODevice::WriteOnly ) ) {
+        std::string error = "Unable to open the file " + fileName.toStdString( );
+        throw std::invalid_argument( error );
+    }
+
+    QTextStream stream( &file );
+    for ( int i = 0; i < arr.size( ); ++i ) {
+        stream << arr[i];
+        if ( i != (arr.size( ) - 1) ) {
+            stream << " ";
+        } else {
+            stream << endl;
+        }
+    }
+    file.close( );
+
+    if ( stream.status( ) != QTextStream::Ok ) {
+        std::string error = "Unable to write to the file " + fileName.toStdString( );
+        throw std::runtime_error( error );
+    }
+}
+
+/*!
+ * Show data on the screen
+ * \param data Data
+ */
+void showData( const QVector<int> &arr ) {
+    for ( int i = 0; i < arr.size( ); ++i ) {
+        std::cout << QString::number( arr[i] ).toStdString( ) << std::endl;
+    }
+}
+[/code]
+
+Удобно написать свой класс с исключением и тогда можно указать номер строки в файле, где не получилось считать данные:
+[code=cpp]
+throw FileReadError( fileName, lineNumber );
+[/code]
+
+
+Как же быть с языками такими, как Java и C#. Там они сплош и рядом.
+
+Вот на C++ исключения можно полностью обойти (может это связано с совместимостью с Си). Хотя польностью тоже не получится, так как STD использет их. Но можно же "смоделировать" Java и C#, применяя исключения.
+
+Есть одна большая проблема в C++. Если я объявлю функцию и перечислю исключения:
+[code=cpp]
+void readData( const QString &fileName, QVector<int> &arr )
+throw (std::invalid_argument, std::runtime_error);
+[/code]
+
+то моя если моя функция выбрасывает исключение другого типа, то меня компилятор не предупредит об этом
+
+Сравнить исключения в Java и C#

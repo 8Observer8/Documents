@@ -1,0 +1,40 @@
+Причины утечки памяти и способы борьбы с ними
+
+Привет!
+
+Как я понял, один из самых действенных способов борьбы с утечками памяти - это использование "умных указателей"
+
+Вот примеры из этой книги: http://www.wrox.com/WileyCDA/WroxTitle/Professional-C-2nd-Edition.productCd-0470932449.html
+
+void leaky()
+{
+    Simple* mySimplePtr = new Simple();  // BUG! Memory is never released!
+    mySimplePtr->go();
+}
+
+void notLeaky()
+{
+    shared_ptr<Simple> mySimpleSmartPtr(new Simple());
+    mySimpleSmartPtr->go();
+}
+
+В первом примере утечка, а во втором - нет (память после выхода из функции notLeaky() сразу освобождается)
+
+А вот в следующем примере утечка памяти:
+
+void couldBeLeaky()
+{
+    Simple* mySimplePtr = new Simple();
+    mySimplePtr->go();
+    delete mySimplePtr;
+}
+
+Так как при вызове mySimplePtr->go(); может срабатывать исключение, тогда строка кода: delete mySimplePtr; не будет выполняться.
+
+Нужно ли в Qt везде, где используются указатели использовать shared_ptr?
+
+К примеру, здесь:
+
+[code]
+Dialog *w = new Dialog();
+[/code]

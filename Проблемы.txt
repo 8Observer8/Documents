@@ -1,0 +1,8 @@
+Проблемы:
+
+Проблема с запуском приложения: http
+QSslSocket: cannot call unresolved function SSLv23_client_method
+QSslSocket: cannot call unresolved function SSL_CTX_new
+QSslSocket: cannot call unresolved function SSL_library_init
+QSslSocket: cannot call unresolved function ERR_get_error
+QSslSocket: cannot call unresolved function ERR_get_error

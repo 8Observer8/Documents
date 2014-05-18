@@ -1,0 +1,2 @@
+6. Принципы работы qmake, moc, makefiles.
+
