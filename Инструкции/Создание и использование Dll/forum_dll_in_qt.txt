@@ -1,14 +1,21 @@
-Пошаговая инструкция. Создание и использование Dll
+Ответ:
+- Изменил название
+- Добавил инструкцию создания статической библиотеки
 
-Я разобрался, как создавать и использовать dll в Qt. Написал пошаговую инструкцию, для таких же новичков, как и я:
+Пошаговая инструкция. Создание и использование динамических и статических библиотек
 
-[b]Инструментарий:[/b]
+[b]Инструментарий[/b]
+
 Операционная система: Windows 7
 Версия Qt: Qt 5.2.0 for Windows 32-bit (MinGW 4.8, OpenGL)
+
+Эта инструкция состоит из двух частей:
 
 [b]Создание Dll[/b]
 
 - запускаем Qt Creator
+- если у Вас Qt Creator на русском, то я рекомендовал бы переключиться на английский. Для этого выбираем в меню "Инструменты" -> "Параметры..."
+- в окне "Параметры" слева выбираем "Среда" -> открываем вкладку "Основные" -> выбираем в выпадающем списке "English" -> нажимаем кнопку "OK" -> перезапускаем Qt Creator
 - в меню выбираем "File" -> "New File or Project..."
 - в разделе "Projects" выбираем "Libraries"
 - в центральном разделе выбираем "C++ Library" -> нажимаем кнопку "Choose..."
@@ -29,22 +36,22 @@
 class PERSONSHARED_EXPORT Person
 {
 public:
-    Person();
-    Person(const QString &firstName, const QString &secondName, int age);
+    Person();
+    Person(const QString &firstName, const QString &secondName, int age);
 
-    QString firstName() const;
-    void setFirstName(const QString &firstName);
+    QString firstName() const;
+    void setFirstName(const QString &firstName);
 
-    QString secondName() const;
-    void setSecondName(const QString &secondName);
+    QString secondName() const;
+    void setSecondName(const QString &secondName);
 
-    int age() const;
-    void setAge(int age);
+    int age() const;
+    void setAge(int age);
 
 private:
-    QString mFirstName;
-    QString mSecondName;
-    int mAge;
+    QString mFirstName;
+    QString mSecondName;
+    int mAge;
 };
 
 #endif // PERSON_H
@@ -58,47 +65,47 @@ private:
 #include "person.h"
 
 Person::Person() :
-    mFirstName(""),
-    mSecondName(""),
-    mAge(0)
+    mFirstName(""),
+    mSecondName(""),
+    mAge(0)
 {
 }
 
 Person::Person(const QString &firstName, const QString &secondName, int age) :
-    mFirstName(firstName),
-    mSecondName(secondName),
-    mAge(age)
+    mFirstName(firstName),
+    mSecondName(secondName),
+    mAge(age)
 {
 }
 
 QString Person::firstName() const
 {
-    return mFirstName;
+    return mFirstName;
 }
 
 void Person::setFirstName(const QString &firstName)
 {
-    mFirstName = firstName;
+    mFirstName = firstName;
 }
 
 QString Person::secondName() const
 {
-    return mSecondName;
+    return mSecondName;
 }
 
 void Person::setSecondName(const QString &secondName)
 {
-    mSecondName = secondName;
+    mSecondName = secondName;
 }
 
 int Person::age() const
 {
-    return mAge;
+    return mAge;
 }
 
 void Person::setAge(int age)
 {
-    mAge = age;
+    mAge = age;
 }
 [/code]
 
@@ -114,7 +121,7 @@ void Person::setAge(int age)
 - в списке "qmake build configuration" выбираем "Release"
 - в поле "Additional arguments" вводим (в двойных кавычках): "CONFIG += release"
 - в меню выбираем "Build" -> "Build Project Person"
-- переходим в папку "release" проект, там находится dll "Person.dll"
+- переходим в папку "release" проекта, там находится dll "Person.dll"
 - теперь мы можем использовать в других проектах файлы: person.h, person_global.h и Person.dll
 
 [b]Использование Dll[/b]
@@ -125,12 +132,11 @@ void Person::setAge(int age)
 - имя проекта: UsageOfPersonDll
 - выбираем путь, где будет создан проект, к примеру: D:\Documents\Qt\QtDeploying\0002_UsageOfPersonDll
 - нажимаем "Next" -> "Next" -> "Finish"
-- копируем в папку с проектом файлы: person.h, person_global.h и Person.dll
+- копируем в папку с проектом файлы: person.h, person_global.h
 - подключаем к проекту файлы "person.h" и "person_global.h", для этого кликаем правой кнопкой мыши по имени проекта в Qt Creator и выбираем "Add Existing Files" -> выделяем "person.h" и "person_global.h" -> нажимаем "Open"
 - в меню выбираем "Build" -> "Build Project UsageOfPersonDll"
 - копируем файл "Person.dll" из папки "debug" проекта "Person" в папку "debug" проекта "UsageOfPersonDll"
 - копируем файл "Person.dll" из папки "release" проекта "Person" в папку "debug" проекта "UsageOfPersonDll"
-
 - открываем файл "UsageOfPersonDll.pro" и добавляем следующую строку (путь к "Person.dll"):
 [code=cpp]
 LIBS += "..\build-UsageOfPersonDll-Desktop_Qt_5_2_0_MinGW_32bit-Debug\debug\Person.dll"
@@ -150,15 +156,15 @@ LIBS += "..\build-UsageOfPersonDll-Desktop_Qt_5_2_0_MinGW_32bit-Release\release\
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication a(argc, argv);
+    QCoreApplication a(argc, argv);
 
-    Person Bob("Bob", "Steventson", 20);
+    Person Bob("Bob", "Steventson", 20);
 
-    qDebug() << "First Name: " << Bob.firstName();
-    qDebug() << "Second Name: " << Bob.secondName();
-    qDebug() << "Age: " << Bob.age();
+    qDebug() << "First Name: " << Bob.firstName();
+    qDebug() << "Second Name: " << Bob.secondName();
+    qDebug() << "Age: " << Bob.age();
 
-    return a.exec();
+    return a.exec();
 }
 [/code]
 
