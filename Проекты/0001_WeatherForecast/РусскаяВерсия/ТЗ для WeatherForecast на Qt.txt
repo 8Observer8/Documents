@@ -1,0 +1,2 @@
+ТЗ для WeatherForecast на Qt
+

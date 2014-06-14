@@ -1,0 +1,14 @@
+Методика оформления ТЗ
+
+Техническое задание должно содержать:
+- Название
+- Краткая формулировка задания
+- Перечень инструментальных средств
+- 392343
+
+Methodology of design of the objective
+
+The objective must have:
+- Name of project
+- Short task
+- List of tools
