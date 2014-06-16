@@ -196,8 +196,148 @@ FileWriteError.h
 [code=cpp]
 [/code]
 
+Функции чтения, записи и вывода данных на экран будут выбрасывать следующие исключения:
+
+[code=cpp]
+#ifndef FREEFUNCTIONS_H
+#define FREEFUNCTIONS_H
+
+#include <string>
+#include <vector>
+
+#include "EmptyArgument.h"
+#include "FileOpenError.h"
+#include "FileReadError.h"
+#include "FileWriteError.h"
+
+void readData( const std::string &fileName, std::string &content )
+throw( EmptyArgument, FileOpenError, FileReadError );
+
+void searchText( const std::string &text,
+                 std::vector<int> &numbers )
+throw( EmptyArgument );
+
+void showNumbers( const std::vector<in> &numbers )
+throw( EmptyArgument );
+
+#endif // FREEFUNCTIONS_H
+[/code]
+
+Вызывающая сторона будет отлавливать исключения следующим образом:
+
+[code=cpp]
+
+#include <iostream>
+#include <string>
+#include <vector>
+
+#include "freeFunctions.h"
+#include "LogicError.h"
+#include "FileError.h"
+
+int main( )
+{
+    // Read data from the input file
+    std::string fileName = "input.txt";
+    std::string content;
+    try {
+        readData( fileName, content );
+    } catch ( const LogicError &e ) {
+        std::cerr << e.what( ) << std::endl;
+        return 1;
+    } catch ( const FileError &e ) {
+        std::cerr << e.what( ) << std::endl;
+        return 1;
+    } catch ( ... ) {
+        std::cerr << "Error: unknown exception" << std::endl;
+        return 1;
+    }
+
+    // Search text
+    std::string text = "my";
+    std::vector<int> numbers;
+    try {
+        searchText( content, text, numbers );
+    } catch ( const LogicError &e ) {
+        std::cerr << e.what( ) << std::endl;
+        return 1;
+    } catch ( ... ) {
+        std::cerr << "Error: unknown exception" << std::endl;
+        return 1;
+    }
+
+    // Show number of lines
+    try {
+        showNumbers( numbers );
+    } catch ( const LogicError &e ) {
+        std::cerr << e.what( ) << std::endl;
+        return 1;
+    } catch ( ... ) {
+        std::cerr << "Error: unknown exception" << std::endl;
+        return 1;
+    }
+
+    return 0;
+}
+[/code]
+
+На данный момент у нас не реализованны модули LogicError, FileError, FileOpenError, FileReadError, FileWriteError. Пишем реализацию для них:
+
 [b]Разработка тестов для модулей проекта[/b]
 
-О том как настроить Google Test и научиться с ним работать написано в этой инструкции: http://www.prog.org.ru/topic_26944_0.html
+Напишем тесты для модулей LogicError, FileError, FileOpenError, FileReadError, FileWriteError
 
-[b]Создание статической библиотеки libGoogleTest.a[/b]
+Для каждого модуля повторяем следующее (меняем только имена проектов и содержимое main.cpp):
+
+Примечание. О том как настроить Google Test и научиться с ним работать написано в этой инструкции: http://www.prog.org.ru/topic_26944_0.html
+
+- В меню Qt Creator'а выбираем "File" -> "New File or Project..."
+
+- В разделе "Projects" выбираем "Other Project" -> во второй колонке выбираем "Empty Qt Project"
+
+- Нажимаем кнопку "Choose"
+
+- В поле "Name" пишем имя проекта, например: InOutOfTextFile_EmptyArgument_gtests
+
+- В поле "Create in" указываем путь, куда будут сохраняться файлы проекта. Для этого нажимаем кнопку "Browse..." -> выбираем корень проекта "InOutOfTextFile" и создаём папку "GTests" -> нажимаем кнопку "Select Folder"
+
+- Нажимаем кнопку "Next" и т.д.
+
+Примечание. Весь код надо писать вручную (без копипаста), чтобы "набивать руки"
+
+Добавляем файл EmptyArgument.h следующим образом: кликаем правой кнопкой мыши по названию проекта (на панели "Projects" слева) и выбираем "Add Existing Files..." -> переходим в корень проекта "InOutOfTextFile" и выбираем файл EmptyArgument.h
+
+Открываем файла InOutOfTextFile_EmptyArgument_gtests.pro и пишем:
+
+[code=cpp]
+[/code]
+
+- Создаём файл main.cpp, со следующим содержимым:
+
+main.cpp
+[code=cpp]
+[/code]
+
+- Запускаем тесты (Ctrl+R)
+
+Таким же образом, что и выше создаём проекты в папке GTests:
+- InOutOfTextFile_EmptyArgument_gtests
+- InOutOfTextFile_FileOpenError_gtests
+- InOutOfTextFile_FileReadError_gtests
+- InOutOfTextFile_FileWriteError_gtests
+
+[b]Разработка функций чтения, записы и вывода данных на экран[/b]
+
+- Переключаемся на основной проект InOutOfTextFile, для этого нажимаем правой кнопкой мыши по названию проекта InOutOfTextFile и выбираем "Set "InOutOfTextFile" as Active Project"
+
+- Пишем реализацию для функций readData(), writeData() и showData():
+
+freeFunctions.cpp
+[code=cpp]
+[/code]
+
+- Создаём файл "input.txt" -> Пишем в него числа -> Запускаем приложение (Ctrl+R)
+
+P.S. Рекомендую build-файлы тестов хранить в отдельной папке в той же директории, что и build-файлы основного проекта. Например, указать такой путь: D:\Documents\Qt\QtRegExp\001_SimpleText\build_files_for_gtests\build-SimpleText_EmptyArgument_gtests-Desktop_Qt_5_3_0_MinGW_32bit-Debug
+
+Для этого надо 
